@@ -67,6 +67,7 @@ def main():
                     if r.status_code == 200:
                         current_id = current_id+i
                         break
+                    time.sleep(0.2)
             else:
                 logging.info("Green points are sleeping, I'm sleeping too....")
                 time.sleep(600)
