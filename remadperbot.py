@@ -15,6 +15,7 @@ LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 TOKEN=os.environ.get("TOKEN")
 CHANNEL_ID=os.environ.get("CHANNEL_ID")
 SCRAPE_INTERVAL=os.environ.get("SCRAPE_INTERVAL", 10)
+SCRAPE_WINDOW=os.environ.get("SCRAPE_WINDOW", 100)
 
 logging.basicConfig(level=LOGLEVEL, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -40,7 +41,7 @@ def check_if_green_point_opened():
     now = datetime.now()
     today8am = now.replace(hour=8, minute=0, second=0, microsecond=0)
     today8pm = now.replace(hour=20, minute=0, second=0, microsecond=0)
-    today8am < now < today8pm
+    return today8am < now < today8pm
 
 def main():
     bot = telegram.Bot(token=TOKEN)
@@ -51,14 +52,21 @@ def main():
         logging.debug("Request to {} with status code {}".format(r.url, r.status_code))
         if r.status_code == 200:
             data = extract_article_info(r.content, url)
+            current_id +=1
             logging.info("New Product found, increasing counter to {}".format(current_id))
             r = requests.get(data['img'].replace("./",""), stream=True, verify=False, allow_redirects=True, headers=headers)
             img = io.BytesIO(r.content)
             bot.send_photo(chat_id=CHANNEL_ID, photo=img, caption=data['title'] + '\n' + "\n".join(data['metadata']), parse_mode=telegram.ParseMode.HTML)
-            current_id +=1
         else:
             if check_if_green_point_opened():
                 time.sleep(SCRAPE_INTERVAL)
+                logging.debug("Green points open, finding more products...")
+                for i in range(1, SCRAPE_WINDOW):
+                    url = "https://www.remad.es/web/antiquity/{}".format(current_id+i)
+                    r = requests.get(url, verify=False, headers=headers)
+                    if r.status_code == 200:
+                        current_id = current_id+i
+                        break
             else:
                 logging.info("Green points are sleeping, I'm sleeping too....")
                 time.sleep(600)
