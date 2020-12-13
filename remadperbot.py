@@ -56,7 +56,10 @@ def main():
             logging.info("New Product found, increasing counter to {}".format(current_id))
             r = requests.get(data['img'].replace("./",""), stream=True, verify=False, allow_redirects=True, headers=headers)
             img = io.BytesIO(r.content)
-            bot.send_photo(chat_id=CHANNEL_ID, photo=img, caption=data['title'] + '\n' + "\n".join(data['metadata']), parse_mode=telegram.ParseMode.HTML)
+            try:
+                bot.send_photo(chat_id=CHANNEL_ID, photo=img, caption=data['title'] + '\n' + "\n".join(data['metadata']), parse_mode=telegram.ParseMode.HTML)
+            except:
+                log.debug("Image of {} can't be sent".format(current_id))
         else:
             if check_if_green_point_opened():
                 time.sleep(SCRAPE_INTERVAL)
