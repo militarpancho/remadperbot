@@ -3,6 +3,5 @@ version: '2'
 services:
   remadperbot:
     build: .
-    restart: always
     env_file:
     - .env

@@ -59,7 +59,7 @@ def main():
             try:
                 bot.send_photo(chat_id=CHANNEL_ID, photo=img, caption=data['title'] + '\n' + "\n".join(data['metadata']), parse_mode=telegram.ParseMode.HTML)
             except:
-                log.debug("Image of {} can't be sent".format(current_id))
+                logging.debug("Image of {} can't be sent".format(current_id))
         else:
             if check_if_green_point_opened():
                 time.sleep(SCRAPE_INTERVAL)
