@@ -48,32 +48,38 @@ def main():
     current_id = int(os.environ.get("FIRST_ID", 31158))
     while True:
         url = "https://www.remad.es/web/antiquity/{}".format(current_id)
-        r = requests.get(url, verify=False, headers=headers)
-        logging.debug("Request to {} with status code {}".format(r.url, r.status_code))
-        if r.status_code == 200:
-            data = extract_article_info(r.content, url)
-            current_id +=1
-            logging.info("New Product found, increasing counter to {}".format(current_id))
-            r = requests.get(data['img'].replace("./",""), stream=True, verify=False, allow_redirects=True, headers=headers)
-            img = io.BytesIO(r.content)
-            try:
-                bot.send_photo(chat_id=CHANNEL_ID, photo=img, caption=data['title'] + '\n' + "\n".join(data['metadata']), parse_mode=telegram.ParseMode.HTML)
-            except:
-                logging.debug("Image of {} can't be sent".format(current_id))
-        else:
-            if check_if_green_point_opened():
-                time.sleep(SCRAPE_INTERVAL)
-                logging.debug("Green points open, finding more products...")
-                for i in range(1, SCRAPE_WINDOW):
-                    url = "https://www.remad.es/web/antiquity/{}".format(current_id+i)
-                    r = requests.get(url, verify=False, headers=headers)
-                    if r.status_code == 200:
-                        current_id = current_id+i
-                        break
-                    time.sleep(0.2)
+        try:
+            r = requests.get(url, verify=False, headers=headers)
+            logging.debug("Request to {} with status code {}".format(r.url, r.status_code))
+            if r.status_code == 200:
+                data = extract_article_info(r.content, url)
+                current_id +=1
+                logging.info("New Product found, increasing counter to {}".format(current_id))
+                r = requests.get(data['img'].replace("./",""), stream=True, verify=False, allow_redirects=True, headers=headers)
+                img = io.BytesIO(r.content)
+                try:
+                    bot.send_photo(chat_id=CHANNEL_ID, photo=img, caption=data['title'] + '\n' + "\n".join(data['metadata']), parse_mode=telegram.ParseMode.HTML)
+                except:
+                    logging.debug("Image of {} can't be sent".format(current_id))
             else:
-                logging.info("Green points are sleeping, I'm sleeping too....")
-                time.sleep(600)
+                if check_if_green_point_opened():
+                    time.sleep(int(SCRAPE_INTERVAL))
+                    logging.debug("Green points open, finding more products...")
+                    for i in range(1, int(SCRAPE_WINDOW)):
+                        url = "https://www.remad.es/web/antiquity/{}".format(current_id+i)
+                        try: 
+                            r = requests.get(url, verify=False, headers=headers)
+                            if r.status_code == 200:
+                                current_id = current_id+i
+                                break
+                        except:
+                            logging.info("Request not processable")
+                        time.sleep(0.1)
+                else:
+                    time.sleep(600)
+        except:
+            logging.info("Error getting data from request. Continue to the next product")
+            current_id += 1 
 
 
 if __name__ == '__main__':
