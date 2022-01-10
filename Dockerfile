@@ -1,16 +1,12 @@
-FROM python:3.7.2
+FROM golang:1.17-alpine
+
+WORKDIR /go/src/remadperbot
+COPY . .
+RUN go mod tidy && \
+	go build -o /go/src/remadperbot/remadperbot
 
 
-ENV PYTHONWARNINGS="ignore:Unverified HTTPS request"
+FROM scratch
 
-COPY ./requirements.txt /usr/src/app/requirements.txt
-
-WORKDIR /usr/src/app
-
-RUN pip install -r requirements.txt
-
-COPY . /usr/src/app
-
-ENTRYPOINT [ "python" ]
-
-CMD [ "remadperbot.py" ]
+COPY --from=0 /go/src/remadperbot/remadperbot /go/bin/remadperbot
+CMD ["/go/bin/remadperbot"]

@@ -67,7 +67,7 @@ def main():
                     logging.debug("Green points open, finding more products...")
                     for i in range(1, int(SCRAPE_WINDOW)):
                         url = "https://www.remad.es/web/antiquity/{}".format(current_id+i)
-                        try: 
+                        try:
                             r = requests.get(url, verify=False, headers=headers)
                             if r.status_code == 200:
                                 current_id = current_id+i
@@ -79,9 +79,10 @@ def main():
                     time.sleep(600)
         except:
             logging.info("Error getting data from request. Continue to the next product")
-            current_id += 1 
+            current_id += 1
 
 
 if __name__ == '__main__':
     main()
 
+D D
