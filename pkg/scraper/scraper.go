@@ -34,7 +34,7 @@ func ExtractArticleInfo(url string) ArticleInfo {
 	var thumbnail_body []soup.Root = doc.FindStrict("div", "class", "thumbnail-body").FindAll("p")
 	var metadata [5]string
 	for i, p := range thumbnail_body {
-		metadata[i] = cleanCategory(p.Text())
+		metadata[i] = cleanCategory(p.Children()[0].HTML() + p.Text())
 	}
 	return ArticleInfo{
 		Metadata: metadata,
@@ -90,10 +90,6 @@ func downloadImage(url string) []byte {
 }
 
 func cleanCategory(x string) string {
-	r, _ := regexp.Compile(`[\n\r\t]`)
-	var cleaned = ""
-	for _, i := range x {
-		cleaned += r.ReplaceAllString(string(i), " ")
-	}
-	return cleaned
+	r, _ := regexp.Compile(`[\n\t\r]`)
+	return r.ReplaceAllString(x, "")
 }

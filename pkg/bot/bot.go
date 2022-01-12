@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	scraper "remadperbot/pkg/scraper"
 
@@ -36,24 +37,7 @@ func (b *botClient) PostNewArticle(articleInfo scraper.ArticleInfo) (tgbotapi.Me
 		Bytes: articleInfo.Img,
 	}
 	msg := tgbotapi.NewPhoto(int64(channel_id), file)
-
+	msg.Caption = articleInfo.Title + "\n" + strings.Join(articleInfo.Metadata[:], "\n")
+	msg.ParseMode = "HTML"
 	return b.api.Send(msg)
 }
-
-// log.Printf("Authorized on account %s", bot.Self.UserName)
-
-// u := tgbotapi.NewUpdate(0)
-// u.Timeout = 60
-
-// updates := bot.GetUpdatesChan(u)
-
-// for update := range updates {
-// 	if update.Message != nil { // If we got a message
-// 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-// 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-// 		msg.ReplyToMessageID = update.Message.MessageID
-
-// 		bot.Send(msg)
-// 	}
-// }
