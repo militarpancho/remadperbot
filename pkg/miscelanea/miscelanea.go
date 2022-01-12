@@ -7,17 +7,18 @@ import (
 const newLayout = "15:04"
 
 func CheckOpenGreenPoints() bool {
-	now := time.Now()
-	today3pm, _ := time.Parse(newLayout, "14:00")
-	today8pm, _ := time.Parse(newLayout, "19:00")
-	return inTimeSpan(today3pm, today8pm, now)
+	now := time.Now().Format(newLayout)
+	clock, _ := time.Parse(newLayout, now)
+	today8pm, _ := time.Parse(newLayout, "07:00")
+	today20pm, _ := time.Parse(newLayout, "19:00")
+	return inTimeSpan(today8pm, today20pm, clock)
 }
 
 func SecondsICanSleep() int {
 	now := time.Now().Format(newLayout)
 	clock, _ := time.Parse(newLayout, now)
-	today3pm, _ := time.Parse(newLayout, "01:00")
-	return int(today3pm.Sub(clock).Seconds())
+	today8pm, _ := time.Parse(newLayout, "07:00")
+	return int(today8pm.Sub(clock).Seconds())
 }
 
 func inTimeSpan(start, end, check time.Time) bool {

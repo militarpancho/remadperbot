@@ -28,7 +28,7 @@ func main() {
 		} else {
 			secondsUntil3pm := miscelanea.SecondsICanSleep()
 			if 0 < secondsUntil3pm && secondsUntil3pm < sleepTime {
-				log.Printf("[%s] Remad is going to open in: %d \n", time.Now().Format(time.RFC850), secondsUntil3pm)
+				log.Printf("Remad is going to open in: %d \n", secondsUntil3pm)
 				time.Sleep(time.Duration(secondsUntil3pm) * time.Second)
 			} else {
 				time.Sleep(sleepTime * time.Second)

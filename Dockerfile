@@ -1,4 +1,6 @@
 FROM golang:alpine AS builder
+
+ARG ARCH=arm
 # Install git.
 # Git is required for fetching the dependencies.
 RUN apk update && apk add --no-cache git
@@ -23,7 +25,7 @@ RUN go get -d -v
 # RUN go mod download
 # RUN go mod verify
 # Build the binary.
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo -ldflags '-w' -o /go/bin/remadperbot *.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -a -tags netgo -ldflags '-w' -o /go/bin/remadperbot *.go
 
 ############################
 # STEP 2 build a small image
