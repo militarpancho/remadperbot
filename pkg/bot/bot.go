@@ -29,7 +29,6 @@ func NewTelegramBot() botClient {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
-	bot.Debug = true
 	return botClient{
 		Api:         bot,
 		UpdatesChan: bot.GetUpdatesChan(u),
@@ -58,14 +57,23 @@ func (b *botClient) PostNewArticle(articleInfo *scraper.ArticleInfo) (tgbotapi.M
 
 func (b *botClient) refreshProductStatus(update tgbotapi.Update) {
 	articleInfo := scraper.ExtractArticleInfo(update.CallbackData(), false)
-	editMessage := tgbotapi.NewEditMessageCaption(
-		update.CallbackQuery.Message.Chat.ID,
-		update.CallbackQuery.Message.MessageID,
-		articleInfo.Title+"\n"+strings.Join(articleInfo.Metadata[:], "\n"),
-	)
-	editMessage.ParseMode = "HTML"
-	editMessage.ReplyMarkup = numericKeyboard(articleInfo.Url)
-	numericKeyboard(articleInfo.Url)
+	var editMessage tgbotapi.EditMessageCaptionConfig
+	if articleInfo != nil {
+		editMessage = tgbotapi.NewEditMessageCaption(
+			update.CallbackQuery.Message.Chat.ID,
+			update.CallbackQuery.Message.MessageID,
+			articleInfo.Title+"\n"+strings.Join(articleInfo.Metadata[:], "\n"),
+		)
+		editMessage.ParseMode = "HTML"
+		editMessage.ReplyMarkup = numericKeyboard(articleInfo.Url)
+		numericKeyboard(articleInfo.Url)
+	} else {
+		editMessage = tgbotapi.NewEditMessageCaption(
+			update.CallbackQuery.Message.Chat.ID,
+			update.CallbackQuery.Message.MessageID,
+			"Producto ya no disponible en Remad",
+		)
+	}
 	b.Api.Send(editMessage)
 }
 

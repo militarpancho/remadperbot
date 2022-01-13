@@ -34,7 +34,7 @@ func ExtractArticleInfo(url string, download_image bool) *ArticleInfo {
 		title := doc.Find("h1")
 		var thumbnail_body []soup.Root = doc.FindStrict("div", "class", "thumbnail-body").FindAll("p")
 		var thumbnail_action soup.Root = doc.FindStrict("div", "class", "thumbnail-action-lg")
-		if thumbnail_action.Error == nil {
+		if thumbnail_action.Find("p").Error == nil {
 			thumbnail_body = append(thumbnail_body, thumbnail_action.Find("p"))
 		}
 
