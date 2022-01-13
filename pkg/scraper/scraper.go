@@ -92,11 +92,12 @@ func FindLastObject() (string, int) {
 	href := results.Children()[1].Find("a").Attrs()["href"]
 	split_href := strings.Split(href, "/")
 	s_id := split_href[len(split_href)-1]
+	endpoint := strings.Join(split_href[0:len(split_href)-1], "/")
 	id, err := strconv.Atoi(s_id)
 	if err != nil {
 		fmt.Errorf("Casting id to int error: %w", err)
 	}
-	return href, id
+	return endpoint, id
 }
 
 func downloadImage(url string) []byte {

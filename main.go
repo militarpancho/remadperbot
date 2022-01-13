@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"remadperbot/pkg/bot"
 	"remadperbot/pkg/miscelanea"
@@ -17,12 +18,17 @@ func main() {
 	go botClient.HandleUpdates()
 	for true {
 		if miscelanea.CheckOpenGreenPoints() {
-			url, last_id := scraper.FindLastObject()
+			endpoint, last_id := scraper.FindLastObject()
 			if last_id != current_id {
-				log.Printf("New Product found: %s", url)
-				article_info := scraper.ExtractArticleInfo(url, true)
-				if article_info != nil {
-					botClient.PostNewArticle(article_info)
+				if current_id != 0 {
+					for i := current_id + 1; i <= last_id; i++ {
+						url := endpoint + "/" + fmt.Sprint(i)
+						article_info := scraper.ExtractArticleInfo(url, true)
+						if article_info != nil {
+							log.Printf("New Product found: %s", url)
+							botClient.PostNewArticle(article_info)
+						}
+					}
 				}
 				current_id = last_id
 			}
