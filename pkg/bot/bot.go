@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -64,16 +65,15 @@ func (b *botClient) refreshProductStatus(update tgbotapi.Update) {
 			update.CallbackQuery.Message.MessageID,
 			articleInfo.Title+"\n"+strings.Join(articleInfo.Metadata[:], "\n"),
 		)
-		editMessage.ParseMode = "HTML"
-		editMessage.ReplyMarkup = numericKeyboard(articleInfo.Url)
-		numericKeyboard(articleInfo.Url)
 	} else {
 		editMessage = tgbotapi.NewEditMessageCaption(
 			update.CallbackQuery.Message.Chat.ID,
 			update.CallbackQuery.Message.MessageID,
-			"Producto ya no disponible en Remad",
+			fmt.Sprintf("<a href=\"%s\">%s</a>", update.CallbackData(), "Producto no disponible"),
 		)
 	}
+	editMessage.ParseMode = "HTML"
+	editMessage.ReplyMarkup = numericKeyboard(update.CallbackData())
 	b.Api.Send(editMessage)
 }
 

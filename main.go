@@ -14,7 +14,7 @@ const scraperInterval = 2
 func main() {
 	botClient := bot.NewTelegramBot()
 	var current_id int
-
+	go botClient.HandleUpdates()
 	for true {
 		if miscelanea.CheckOpenGreenPoints() {
 			url, last_id := scraper.FindLastObject()
@@ -28,7 +28,6 @@ func main() {
 			}
 		}
 		time.Sleep(scraperInterval * time.Second)
-		botClient.HandleUpdates()
 	}
 
 }
