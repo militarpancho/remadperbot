@@ -20,20 +20,15 @@ func main() {
 			url, last_id := scraper.FindLastObject()
 			if last_id != current_id {
 				log.Printf("New Product found: %s", url)
-				article_info := scraper.ExtractArticleInfo(url)
-				botClient.PostNewArticle(article_info)
+				article_info := scraper.ExtractArticleInfo(url, true)
+				if article_info != nil {
+					botClient.PostNewArticle(article_info)
+				}
 				current_id = last_id
 			}
-			time.Sleep(scraperInterval * time.Second)
-		} else {
-			secondsUntil3pm := miscelanea.SecondsICanSleep()
-			if 0 < secondsUntil3pm && secondsUntil3pm < sleepTime {
-				log.Printf("Remad is going to open in: %d \n", secondsUntil3pm)
-				time.Sleep(time.Duration(secondsUntil3pm) * time.Second)
-			} else {
-				time.Sleep(sleepTime * time.Second)
-			}
 		}
+		time.Sleep(scraperInterval * time.Second)
+		botClient.HandleUpdates()
 	}
 
 }

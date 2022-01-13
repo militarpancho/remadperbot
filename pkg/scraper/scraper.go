@@ -13,12 +13,13 @@ import (
 )
 
 type ArticleInfo struct {
-	Metadata [5]string
+	Metadata []string
 	Title    string
 	Img      []byte
+	Url      string
 }
 
-func ExtractArticleInfo(url string) ArticleInfo {
+func ExtractArticleInfo(url string, download_image bool) *ArticleInfo {
 	transCfg := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -28,19 +29,52 @@ func ExtractArticleInfo(url string) ArticleInfo {
 	if err != nil {
 		fmt.Errorf("error making the request to url %s : %w", url, err)
 	}
-	doc := soup.HTMLParse(resp)
-	title := doc.Find("h1")
-	image := doc.FindAll("img")[2]
-	var thumbnail_body []soup.Root = doc.FindStrict("div", "class", "thumbnail-body").FindAll("p")
-	var metadata [5]string
-	for i, p := range thumbnail_body {
-		metadata[i] = cleanCategory(p.Children()[0].HTML() + p.Text())
+	if ProductFound(url) {
+		doc := soup.HTMLParse(resp)
+		title := doc.Find("h1")
+		var thumbnail_body []soup.Root = doc.FindStrict("div", "class", "thumbnail-body").FindAll("p")
+		var thumbnail_action soup.Root = doc.FindStrict("div", "class", "thumbnail-action-lg")
+		if thumbnail_action.Error == nil {
+			thumbnail_body = append(thumbnail_body, thumbnail_action.Find("p"))
+		}
+
+		var metadata []string
+		for _, p := range thumbnail_body {
+			metadata = append(metadata, cleanCategory(p.Children()[0].HTML()+p.Text()))
+		}
+
+		var downloaded_image []byte
+		if download_image == true {
+			image := doc.FindAll("img")[2]
+			downloaded_image = downloadImage(strings.ReplaceAll(image.Attrs()["src"], "./", ""))
+		}
+
+		return &ArticleInfo{
+			Metadata: metadata,
+			Title:    fmt.Sprintf("<a href=\"%s\">%s</a>", url, title.Text()),
+			Img:      downloaded_image,
+			Url:      url,
+		}
+	} else {
+		return nil
 	}
-	return ArticleInfo{
-		Metadata: metadata,
-		Title:    fmt.Sprintf("<a href=\"%s\">%s</a>", url, title.Text()),
-		Img:      downloadImage(strings.ReplaceAll(image.Attrs()["src"], "./", "")),
+}
+
+func ProductFound(url string) bool {
+	transCfg := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
+	client := &http.Client{Transport: transCfg}
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Add("User-Agent", "")
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Errorf("Error getting product image: %w", err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	return resp.StatusCode == 200
 }
 
 func FindLastObject() (string, int) {
