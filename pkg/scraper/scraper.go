@@ -40,7 +40,7 @@ func ExtractArticleInfo(url string, download_image bool) *ArticleInfo {
 
 		var metadata []string
 		for _, p := range thumbnail_body {
-			metadata = append(metadata, cleanCategory(p.Children()[0].HTML()+p.Text()))
+			metadata = append(metadata, cleanCategory(p.Children()[0].HTML()+" "+p.Text()))
 		}
 
 		var downloaded_image []byte
