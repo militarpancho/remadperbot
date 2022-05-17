@@ -73,7 +73,7 @@ func (db Database) GetUserItemUpdateById(UserId string, ItemUpdateId string) (mo
 	}
 }
 
-func (db Database) DeleteUserItemUpdate(ItemUpdateId string) error {
+func (db Database) DeleteUsersItemUpdate(ItemUpdateId string) error {
 	query := `DELETE FROM users_item_updates WHERE item_update_id = $2;`
 	_, err := db.Conn.Exec(query, ItemUpdateId)
 	switch err {
