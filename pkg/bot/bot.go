@@ -161,8 +161,14 @@ func (b *botClient) refreshProductStatus(update tgbotapi.Update, cb callbackData
 		)
 	}
 	editMessage.ParseMode = "HTML"
-	editMessage.ReplyMarkup = numericKeyboard(cb.Url)
-	b.Api.Send(editMessage)
+	split_url := strings.Split(cb.Url, "/")
+	s_id := split_url[len(split_url)-1]
+	editMessage.ReplyMarkup = numericKeyboard(s_id)
+	_, err := b.Api.Send(editMessage)
+	if err != nil {
+		err = fmt.Errorf("error refreshing status: %w", err)
+		fmt.Println(err.Error())
+	}
 }
 
 func (b *botClient) insertItemUpdate(update tgbotapi.Update, cb callbackData) {
@@ -178,7 +184,7 @@ func (b *botClient) insertItemUpdate(update tgbotapi.Update, cb callbackData) {
 			fmt.Println(err.Error())
 		}
 	} else {
-		msg := tgbotapi.NewMessage(update.SentFrom().ID, fmt.Sprintf("Te has suscrito a las alertas del articulo %s", articleInfo.Title))
+		msg := tgbotapi.NewMessage(update.SentFrom().ID, fmt.Sprintf("🔔🔔🔔 Te has suscrito a las alertas del articulo %s. Recibiriras una alerta cuando el art�culo cambie de estado.", articleInfo.Title))
 		msg.ParseMode = "HTML"
 		_, err = b.Api.Send(msg)
 		if err != nil {
@@ -196,7 +202,9 @@ func numericKeyboard(id string) *tgbotapi.InlineKeyboardMarkup {
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("🔄 Actualizar Estado", fmt.Sprintf("{\"id\": \"%s\", \"action\":\"update\"}", id)),
 			tgbotapi.NewInlineKeyboardButtonData("👀 Informarme de Cambios", fmt.Sprintf("{\"id\": \"%s\", \"action\":\"notify\"}", id)),
-			tgbotapi.NewInlineKeyboardButtonURL("🤖 Abrir Remad Alerts", "https://t.me/remadperbot"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonURL("🤖 Abrir Alertas Remad Bot", "https://t.me/remadperbot"),
 		),
 	)
 	return &keyboard
