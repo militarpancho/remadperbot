@@ -77,14 +77,14 @@ func (b *botClient) Notify() {
 			fmt.Println(err.Error())
 		}
 		for _, itemUpdate := range item_updates.ItemUpdates {
+			var status string
 			article_info := scraper.ExtractArticleInfo(antiquity_endpoint+itemUpdate.ID, false)
-			if articleInfo != nil {
-				status := strings.Split(article_info.Metadata[3], " ")[1]
+			if article_info != nil {
+				status = strings.Split(article_info.Metadata[3], " ")[1]
 			} else {
-				status := "No disponible"
+				status = "No disponible"
 			}
 			if status != itemUpdate.Status {
-				article_info = scraper.ExtractArticleInfo(antiquity_endpoint+itemUpdate.ID, true)
 				users, err := b.Db.GetAllUsersByItemUpdate(itemUpdate.ID)
 				if err != nil {
 					err = fmt.Errorf("error getting db record: %w", err)
@@ -100,6 +100,9 @@ func (b *botClient) Notify() {
 				if err != nil {
 					err = fmt.Errorf("error updating item status: %w", err)
 					fmt.Println(err.Error())
+				}
+				if itemUpdate.Status == "No disponible" {
+					b.Db.DeleteUsersItemUpdate(itemUpdate.ID)
 				}
 			}
 		}
@@ -174,7 +177,7 @@ func (b *botClient) insertItemUpdate(update tgbotapi.Update, cb callbackData) {
 			fmt.Println(err.Error())
 		}
 	} else {
-		msg := tgbotapi.NewMessage(update.SentFrom().ID, fmt.Sprintf("Te has suscrito a las alertas del articulo %s",  articleInfo.Title))
+		msg := tgbotapi.NewMessage(update.SentFrom().ID, fmt.Sprintf("Te has suscrito a las alertas del articulo %s", articleInfo.Title))
 		msg.ParseMode = "HTML"
 		_, err = b.Api.Send(msg)
 		if err != nil {

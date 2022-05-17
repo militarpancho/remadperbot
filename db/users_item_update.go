@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"log"
 	"remadperbot/pkg/models"
 )
@@ -58,4 +59,27 @@ func (db Database) GetAllUsersByItemUpdate(itemUpdateId string) (models.UserList
 		list.Users = append(list.Users, User)
 	}
 	return list, nil
+}
+
+func (db Database) GetUserItemUpdateById(UserId string, ItemUpdateId string) (models.UsersItemUpdates, error) {
+	userItemUpdate := models.UsersItemUpdates{}
+	query := `SELECT * FROM users_item_updates WHERE user_id = $1 AND item_update_id = $2;`
+	row := db.Conn.QueryRow(query, UserId, ItemUpdateId)
+	switch err := row.Scan(&userItemUpdate.User.ID, &userItemUpdate.ItemUpdate.ID, &userItemUpdate.CreatedAt); err {
+	case sql.ErrNoRows:
+		return userItemUpdate, ErrNoMatch
+	default:
+		return userItemUpdate, err
+	}
+}
+
+func (db Database) DeleteUserItemUpdate(ItemUpdateId string) error {
+	query := `DELETE FROM users_item_updates WHERE item_update_id = $2;`
+	_, err := db.Conn.Exec(query, ItemUpdateId)
+	switch err {
+	case sql.ErrNoRows:
+		return ErrNoMatch
+	default:
+		return err
+	}
 }
