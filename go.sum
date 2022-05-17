@@ -3,6 +3,8 @@ github.com/anaskhan96/soup v1.2.4/go.mod h1:6YnEp9A2yywlYdM4EgDz9NEHclocMepEtku7
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 h1:wG8n/XJQ07TmjbITcGiUaOtXxdrINDz1b0J1w0SzqDc=
 github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1/go.mod h1:A2S0CWkNylc2phvKXWBBdD3K0iGnDBGbzRpISP2zBl8=
+github.com/lib/pq v1.10.4 h1:SO9z7FRPzA03QhHKJrH5BXA6HU1rS4V2nIVrrNC1iYk=
+github.com/lib/pq v1.10.4/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/militarpancho/remadperbot v0.0.0-20211117000625-347a064ae542 h1:Ny968FbWvYMrQGpY/3AI9EV06AJ3kT14T10RSJa9/zY=
 github.com/militarpancho/remadperbot v0.0.0-20211117000625-347a064ae542/go.mod h1:nGiBvieM5XW92NjVSv7ABiubUO6LqVP5G6VjwMiT9hA=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

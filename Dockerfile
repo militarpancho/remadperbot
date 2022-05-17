@@ -1,6 +1,6 @@
 FROM golang:alpine AS builder
 
-ARG ARCH=arm
+ARG ARCH=amd64
 # Install git.
 # Git is required for fetching the dependencies.
 RUN apk update && apk add --no-cache git

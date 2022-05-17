@@ -27,7 +27,8 @@ func ExtractArticleInfo(url string, download_image bool) *ArticleInfo {
 	soup.Header("User-Agent", "")
 	resp, err := soup.GetWithClient(url, client)
 	if err != nil {
-		fmt.Errorf("error making the request to url %s : %w", url, err)
+		err = fmt.Errorf("error making the request to url %s : %w", url, err)
+		fmt.Println(err.Error())
 	}
 	if ProductFound(url) {
 		doc := soup.HTMLParse(resp)
@@ -69,7 +70,8 @@ func ProductFound(url string) bool {
 	req.Header.Add("User-Agent", "")
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Errorf("Error getting product image: %w", err)
+		err = fmt.Errorf("Error getting product image: %w", err)
+		fmt.Println(err.Error())
 		return false
 	}
 	defer resp.Body.Close()
@@ -85,7 +87,8 @@ func FindLastObject() (string, int) {
 	soup.Header("User-Agent", "")
 	resp, err := soup.GetWithClient("https://www.remad.es/web/catalogue", client)
 	if err != nil {
-		fmt.Errorf("error making the request to Remad catalogue : %w", err)
+		err = fmt.Errorf("error making the request to Remad catalogue : %w", err)
+		fmt.Println(err.Error())
 	}
 	doc := soup.HTMLParse(resp)
 	results := doc.FindStrict("div", "id", "results")
@@ -95,7 +98,8 @@ func FindLastObject() (string, int) {
 	endpoint := strings.Join(split_href[0:len(split_href)-1], "/")
 	id, err := strconv.Atoi(s_id)
 	if err != nil {
-		fmt.Errorf("Casting id to int error: %w", err)
+		err = fmt.Errorf("Casting id to int error: %w", err)
+		fmt.Println(err.Error())
 	}
 	return endpoint, id
 }
@@ -112,13 +116,15 @@ func downloadImage(url string) []byte {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		fmt.Errorf("Error getting product image: %w", err)
+		err = fmt.Errorf("Error getting product image: %w", err)
+		fmt.Println(err.Error())
 		return nil
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Errorf("Error reading product image: %w", err)
+		err = fmt.Errorf("Error reading product image: %w", err)
+		fmt.Println(err.Error())
 		return nil
 	}
 	return body
