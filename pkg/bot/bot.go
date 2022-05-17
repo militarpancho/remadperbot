@@ -196,6 +196,7 @@ func numericKeyboard(id string) *tgbotapi.InlineKeyboardMarkup {
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("🔄 Actualizar Estado", fmt.Sprintf("{\"id\": \"%s\", \"action\":\"update\"}", id)),
 			tgbotapi.NewInlineKeyboardButtonData("👀 Informarme de Cambios", fmt.Sprintf("{\"id\": \"%s\", \"action\":\"notify\"}", id)),
+			tgbotapi.NewInlineKeyboardButtonURL("🤖 Abrir Remad Alerts", "https://t.me/remadperbot"),
 		),
 	)
 	return &keyboard
