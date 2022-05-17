@@ -5,6 +5,7 @@ services:
     build: .
     env_file:
     - .env
+    restart: on-failure
   database:
     image: postgres
     env_file:
