@@ -85,6 +85,7 @@ func (b *botClient) Notify() {
 				status = "No disponible"
 			}
 			if status != itemUpdate.Status {
+				article_info = scraper.ExtractArticleInfo(antiquity_endpoint+itemUpdate.ID, true)
 				users, err := b.Db.GetAllUsersByItemUpdate(itemUpdate.ID)
 				if err != nil {
 					err = fmt.Errorf("error getting db record: %w", err)
