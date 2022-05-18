@@ -128,16 +128,18 @@ func (b *botClient) PostNewArticle(articleInfo *scraper.ArticleInfo) (tgbotapi.M
 
 func (b *botClient) PostItemUpdate(articleInfo *scraper.ArticleInfo, users *models.UserList) error {
 	var file tgbotapi.FileBytes
+	var caption string
 	if articleInfo != nil {
 		file = tgbotapi.FileBytes{
 			Name:  "image.jpg",
 			Bytes: articleInfo.Img,
 		}
+		caption = articleInfo.Title + "\nCambio en el estado del artículo: \n" + articleInfo.Metadata[3]
 	}
 	for _, user := range users.Users {
 		user_id, _ := strconv.Atoi(user.ID)
 		msg := tgbotapi.NewPhoto(int64(user_id), file)
-		msg.Caption = articleInfo.Title + "\nCambio en el estado del artículo: \n" + articleInfo.Metadata[3]
+		msg.Caption = caption
 		msg.ParseMode = "HTML"
 		_, err := b.Api.Send(msg)
 		if err != nil {
