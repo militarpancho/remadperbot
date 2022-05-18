@@ -184,7 +184,7 @@ func (b *botClient) insertItemUpdate(update tgbotapi.Update, cb callbackData) {
 			fmt.Println(err.Error())
 		}
 	} else {
-		msg := tgbotapi.NewMessage(update.SentFrom().ID, fmt.Sprintf("🔔🔔🔔 Te has suscrito a las alertas del articulo %s. Recibiriras una alerta cuando el artículo cambie de estado.", articleInfo.Title))
+		msg := tgbotapi.NewMessage(update.SentFrom().ID, fmt.Sprintf("🔔🔔🔔 Te has suscrito a las alertas del artículo %s. Recibiriras una alerta cuando el artículo cambie de estado.", articleInfo.Title))
 		msg.ParseMode = "HTML"
 		_, err = b.Api.Send(msg)
 		var alert_message string
