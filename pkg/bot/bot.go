@@ -158,10 +158,11 @@ func (b *botClient) refreshProductStatus(update tgbotapi.Update, cb callbackData
 	articleInfo := scraper.ExtractArticleInfo(cb.Url, false)
 	var editMessage tgbotapi.EditMessageCaptionConfig
 	if articleInfo != nil {
+		currentTime := time.Now()
 		editMessage = tgbotapi.NewEditMessageCaption(
 			update.CallbackQuery.Message.Chat.ID,
 			update.CallbackQuery.Message.MessageID,
-			articleInfo.Title+"\n"+strings.Join(articleInfo.Metadata[:], "\n"),
+			articleInfo.Title+"\n"+strings.Join(articleInfo.Metadata[:], "\n")+"\n"+fmt.Sprintf("Actualizado a las %s", currentTime.Format("15:04:05 2006-01-02")),
 		)
 		split_url := strings.Split(cb.Url, "/")
 		s_id := split_url[len(split_url)-1]
