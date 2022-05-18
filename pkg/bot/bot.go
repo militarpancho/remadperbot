@@ -127,9 +127,12 @@ func (b *botClient) PostNewArticle(articleInfo *scraper.ArticleInfo) (tgbotapi.M
 }
 
 func (b *botClient) PostItemUpdate(articleInfo *scraper.ArticleInfo, users *models.UserList) error {
-	file := tgbotapi.FileBytes{
-		Name:  "image.jpg",
-		Bytes: articleInfo.Img,
+	var file tgbotapi.FileBytes
+	if articleInfo != nil {
+		file = tgbotapi.FileBytes{
+			Name:  "image.jpg",
+			Bytes: articleInfo.Img,
+		}
 	}
 	for _, user := range users.Users {
 		user_id, _ := strconv.Atoi(user.ID)
