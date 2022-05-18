@@ -187,12 +187,16 @@ func (b *botClient) insertItemUpdate(update tgbotapi.Update, cb callbackData) {
 		msg := tgbotapi.NewMessage(update.SentFrom().ID, fmt.Sprintf("🔔🔔🔔 Te has suscrito a las alertas del articulo %s. Recibiriras una alerta cuando el artículo cambie de estado.", articleInfo.Title))
 		msg.ParseMode = "HTML"
 		_, err = b.Api.Send(msg)
+		var alert_message string
 		if err != nil {
-			callback := tgbotapi.NewCallbackWithAlert(update.CallbackQuery.ID, "Para poder suscribirte, empieza una conversacion con el bot")
-			if _, err = b.Api.Request(callback); err != nil {
-				err = fmt.Errorf("error sending callback: %w", err)
-				fmt.Println(err.Error())
-			}
+			alert_message = "Para poder suscribirte, empieza una conversacion con el bot"
+		} else {
+			alert_message = "Te has suscrito a las alertas de este producto"
+		}
+		callback := tgbotapi.NewCallbackWithAlert(update.CallbackQuery.ID, alert_message)
+		if _, err = b.Api.Request(callback); err != nil {
+			err = fmt.Errorf("error sending callback: %w", err)
+			fmt.Println(err.Error())
 		}
 	}
 }
