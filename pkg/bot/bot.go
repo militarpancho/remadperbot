@@ -163,6 +163,9 @@ func (b *botClient) refreshProductStatus(update tgbotapi.Update, cb callbackData
 			update.CallbackQuery.Message.MessageID,
 			articleInfo.Title+"\n"+strings.Join(articleInfo.Metadata[:], "\n"),
 		)
+		split_url := strings.Split(cb.Url, "/")
+		s_id := split_url[len(split_url)-1]
+		editMessage.ReplyMarkup = numericKeyboard(s_id)
 	} else {
 		editMessage = tgbotapi.NewEditMessageCaption(
 			update.CallbackQuery.Message.Chat.ID,
@@ -171,9 +174,6 @@ func (b *botClient) refreshProductStatus(update tgbotapi.Update, cb callbackData
 		)
 	}
 	editMessage.ParseMode = "HTML"
-	split_url := strings.Split(cb.Url, "/")
-	s_id := split_url[len(split_url)-1]
-	editMessage.ReplyMarkup = numericKeyboard(s_id)
 	_, err := b.Api.Send(editMessage)
 	if err != nil {
 		err = fmt.Errorf("error refreshing status: %w", err)
@@ -183,6 +183,9 @@ func (b *botClient) refreshProductStatus(update tgbotapi.Update, cb callbackData
 
 func (b *botClient) insertItemUpdate(update tgbotapi.Update, cb callbackData) {
 	articleInfo := scraper.ExtractArticleInfo(cb.Url, false)
+	if articleInfo == nil {
+		return
+	}
 	status := strings.Split(articleInfo.Metadata[3], " ")[1]
 	err := b.Db.AddUsersItemUpdate(cb.Id, status, fmt.Sprint(update.SentFrom().ID))
 	if err != nil {
