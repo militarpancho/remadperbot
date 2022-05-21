@@ -103,7 +103,11 @@ func (b *botClient) Notify() {
 					fmt.Println(err.Error())
 				}
 				if itemUpdate.Status == "No disponible" {
-					b.Db.DeleteUsersItemUpdate(itemUpdate.ID)
+					err := b.Db.DeleteUsersItemUpdate(itemUpdate.ID)
+					if err != nil {
+						err = fmt.Errorf("error removing db record: %w", err)
+						fmt.Println(err.Error())
+					}
 				}
 			}
 		}
@@ -145,7 +149,7 @@ func (b *botClient) PostItemUpdate(articleInfo *scraper.ArticleInfo, users *mode
 				return err
 			}
 		} else {
-			caption = "\nCambio en el estado del artículo: \n Estado: <b>No disponible</b>"
+			caption = "\nCambio en el estado de un artículo al que seguias a: \n Estado: <b>No disponible</b>"
 			msg := tgbotapi.NewMessage(int64(user_id), caption)
 			msg.ParseMode = "HTML"
 			_, err := b.Api.Send(msg)
