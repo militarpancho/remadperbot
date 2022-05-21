@@ -108,6 +108,11 @@ func (b *botClient) Notify() {
 						err = fmt.Errorf("error removing db record: %w", err)
 						fmt.Println(err.Error())
 					}
+					err = b.Db.DeleteItemUpdate(itemUpdate.ID)
+					if err != nil {
+						err = fmt.Errorf("error removing db record: %w", err)
+						fmt.Println(err.Error())
+					}
 				}
 			}
 		}
