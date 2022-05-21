@@ -129,7 +129,6 @@ func (b *botClient) PostNewArticle(articleInfo *scraper.ArticleInfo) (tgbotapi.M
 func (b *botClient) PostItemUpdate(articleInfo *scraper.ArticleInfo, users *models.UserList) error {
 	var file tgbotapi.FileBytes
 	var caption string
-	var msg tgbotapi.Chattable
 	for _, user := range users.Users {
 		user_id, _ := strconv.Atoi(user.ID)
 		if articleInfo != nil {
@@ -141,14 +140,18 @@ func (b *botClient) PostItemUpdate(articleInfo *scraper.ArticleInfo, users *mode
 			msg := tgbotapi.NewPhoto(int64(user_id), file)
 			msg.Caption = caption
 			msg.ParseMode = "HTML"
+			_, err := b.Api.Send(msg)
+			if err != nil {
+				return err
+			}
 		} else {
 			caption = "\nCambio en el estado del artículo: \n Estado: <b>No disponible</b>"
 			msg := tgbotapi.NewMessage(int64(user_id), caption)
 			msg.ParseMode = "HTML"
-		}
-		_, err := b.Api.Send(msg)
-		if err != nil {
-			return err
+			_, err := b.Api.Send(msg)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
