@@ -16,7 +16,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-const antiquity_endpoint = "https://www.remad.es/web/antiquity/"
+const antiquityEndpoint = scraper.RemadDetailBaseURL
 
 var (
 	token         = os.Getenv("TOKEN")
@@ -59,7 +59,7 @@ func (b *botClient) HandleUpdates() {
 				err = fmt.Errorf("Error unmarshalling callback data: %w", err)
 				fmt.Println(err.Error())
 			}
-			cb.Url = antiquity_endpoint + cb.Id
+			cb.Url = articleURL(cb.Id)
 			if cb.Action == "update" {
 				b.refreshProductStatus(update, cb)
 			} else if cb.Action == "notify" {
@@ -78,14 +78,14 @@ func (b *botClient) Notify() {
 		}
 		for _, itemUpdate := range item_updates.ItemUpdates {
 			var status string
-			article_info := scraper.ExtractArticleInfo(antiquity_endpoint+itemUpdate.ID, false)
+			article_info := scraper.ExtractArticleInfo(articleURL(itemUpdate.ID), false)
 			if article_info != nil {
-				status = strings.Split(article_info.Metadata[3], " ")[1]
+				status = article_info.Status
 			} else {
 				status = "No disponible"
 			}
 			if status != itemUpdate.Status {
-				article_info = scraper.ExtractArticleInfo(antiquity_endpoint+itemUpdate.ID, true)
+				article_info = scraper.ExtractArticleInfo(articleURL(itemUpdate.ID), true)
 				users, err := b.Db.GetAllUsersByItemUpdate(itemUpdate.ID)
 				if err != nil {
 					err = fmt.Errorf("error getting db record: %w", err)
@@ -128,9 +128,7 @@ func (b *botClient) PostNewArticle(articleInfo *scraper.ArticleInfo) (tgbotapi.M
 	msg := tgbotapi.NewPhoto(int64(channel_id), file)
 	msg.Caption = articleInfo.Title + "\n" + strings.Join(articleInfo.Metadata[:], "\n")
 	msg.ParseMode = "HTML"
-	split_url := strings.Split(articleInfo.Url, "/")
-	s_id := split_url[len(split_url)-1]
-	msg.ReplyMarkup = numericKeyboard(s_id)
+	msg.ReplyMarkup = numericKeyboard(articleID(articleInfo))
 	message, err := b.Api.Send(msg)
 	return message, err
 }
@@ -176,9 +174,7 @@ func (b *botClient) refreshProductStatus(update tgbotapi.Update, cb callbackData
 			update.CallbackQuery.Message.MessageID,
 			articleInfo.Title+"\n"+strings.Join(articleInfo.Metadata[:], "\n")+"\n"+fmt.Sprintf("Actualizado a las %s", currentTime.Format("15:04:05 2006-01-02")),
 		)
-		split_url := strings.Split(cb.Url, "/")
-		s_id := split_url[len(split_url)-1]
-		editMessage.ReplyMarkup = numericKeyboard(s_id)
+		editMessage.ReplyMarkup = numericKeyboard(articleID(articleInfo))
 	} else {
 		editMessage = tgbotapi.NewEditMessageCaption(
 			update.CallbackQuery.Message.Chat.ID,
@@ -199,7 +195,7 @@ func (b *botClient) insertItemUpdate(update tgbotapi.Update, cb callbackData) {
 	if articleInfo == nil {
 		return
 	}
-	status := strings.Split(articleInfo.Metadata[3], " ")[1]
+	status := articleInfo.Status
 	err := b.Db.AddUsersItemUpdate(cb.Id, status, fmt.Sprint(update.SentFrom().ID))
 	if err != nil {
 		err = fmt.Errorf("error inserting db record: %w", err)
@@ -238,4 +234,16 @@ func numericKeyboard(id string) *tgbotapi.InlineKeyboardMarkup {
 		),
 	)
 	return &keyboard
+}
+
+func articleURL(id string) string {
+	return antiquityEndpoint + id
+}
+
+func articleID(articleInfo *scraper.ArticleInfo) string {
+	if articleInfo.ID != "" {
+		return articleInfo.ID
+	}
+	splitURL := strings.Split(articleInfo.Url, "/")
+	return splitURL[len(splitURL)-1]
 }

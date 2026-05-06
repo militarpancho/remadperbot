@@ -28,31 +28,50 @@ func main() {
 		os.Exit(1)
 	}
 	botClient := bot.NewTelegramBot(db)
-	var current_id int
+	scraperClient := scraper.NewClient()
+	seenProducts := map[string]bool{}
+	catalogSeeded := false
 	go botClient.HandleUpdates()
 	go botClient.Notify()
 	for true {
 		if miscelanea.CheckOpenGreenPoints() {
-			endpoint, last_id := scraper.FindLastObject()
-			if last_id != current_id {
-				if current_id != 0 {
-					for i := current_id + 1; i <= last_id; i++ {
-						url := endpoint + "/" + fmt.Sprint(i)
-						article_info := scraper.ExtractArticleInfo(url, true)
-						if article_info != nil {
-							log.Printf("New Product found: %s", url)
-							_, err := botClient.PostNewArticle(article_info)
-							if err != nil {
-								err = fmt.Errorf("Error posting new article: %w", err)
-								fmt.Println(err.Error())
-							}
-						}
-					}
+			if !catalogSeeded {
+				if err := seedSeenProducts(seenProducts, scraperClient); err != nil {
+					err = fmt.Errorf("Error seeding current catalog: %w", err)
+					fmt.Println(err.Error())
+				} else {
+					catalogSeeded = true
 				}
-				current_id = last_id
+			} else {
+				articleInfos, err := scraperClient.ArticleInfosUntilKnown(seenProducts, true)
+				if err != nil {
+					err = fmt.Errorf("Error finding new articles: %w", err)
+					fmt.Println(err.Error())
+				}
+				for _, articleInfo := range articleInfos {
+					log.Printf("New Product found: %s", articleInfo.Url)
+					_, err := botClient.PostNewArticle(articleInfo)
+					if err != nil {
+						err = fmt.Errorf("Error posting new article: %w", err)
+						fmt.Println(err.Error())
+						break
+					}
+					seenProducts[articleInfo.ID] = true
+				}
 			}
 		}
 		time.Sleep(scraperInterval * time.Second)
 	}
 
+}
+
+func seedSeenProducts(seenProducts map[string]bool, scraperClient scraper.Client) error {
+	antiques, err := scraperClient.CatalogPage(0)
+	if err != nil {
+		return err
+	}
+	for _, antiquity := range antiques {
+		seenProducts[antiquity.Hash] = true
+	}
+	return nil
 }
