@@ -77,15 +77,10 @@ func (b *botClient) Notify() {
 			fmt.Println(err.Error())
 		}
 		for _, itemUpdate := range item_updates.ItemUpdates {
-			var status string
 			article_info := scraper.ExtractArticleInfo(articleURL(itemUpdate.ID), false)
-			if article_info != nil {
-				status = article_info.Status
-			} else {
-				status = "No disponible"
-			}
-			if status != itemUpdate.Status {
-				article_info = scraper.ExtractArticleInfo(articleURL(itemUpdate.ID), true)
+			alertPlan := planTrackedItemAlert(itemUpdate, article_info)
+			if alertPlan.Notify {
+				article_info = notificationArticleInfo(article_info, scraper.ExtractArticleInfo(articleURL(itemUpdate.ID), true))
 				users, err := b.Db.GetAllUsersByItemUpdate(itemUpdate.ID)
 				if err != nil {
 					err = fmt.Errorf("error getting db record: %w", err)
@@ -96,13 +91,13 @@ func (b *botClient) Notify() {
 					err = fmt.Errorf("error posting item update: %w", err)
 					fmt.Println(err.Error())
 				}
-				itemUpdate.Status = status
+				itemUpdate.Status = alertPlan.Status
 				_, err = b.Db.UpdateItemUpdate(itemUpdate.ID, itemUpdate)
 				if err != nil {
 					err = fmt.Errorf("error updating item status: %w", err)
 					fmt.Println(err.Error())
 				}
-				if itemUpdate.Status == "No disponible" {
+				if alertPlan.DeleteSubscription {
 					err := b.Db.DeleteUsersItemUpdate(itemUpdate.ID)
 					if err != nil {
 						err = fmt.Errorf("error removing db record: %w", err)
@@ -134,26 +129,23 @@ func (b *botClient) PostNewArticle(articleInfo *scraper.ArticleInfo) (tgbotapi.M
 }
 
 func (b *botClient) PostItemUpdate(articleInfo *scraper.ArticleInfo, users *models.UserList) error {
-	var file tgbotapi.FileBytes
-	var caption string
+	notification := trackedItemNotification(articleInfo)
 	for _, user := range users.Users {
 		user_id, _ := strconv.Atoi(user.ID)
-		if articleInfo != nil {
-			file = tgbotapi.FileBytes{
+		if notification.Photo {
+			file := tgbotapi.FileBytes{
 				Name:  "image.jpg",
-				Bytes: articleInfo.Img,
+				Bytes: notification.PhotoBytes,
 			}
-			caption = articleInfo.Title + "\nCambio en el estado del artículo: \n" + articleInfo.Metadata[3]
 			msg := tgbotapi.NewPhoto(int64(user_id), file)
-			msg.Caption = caption
+			msg.Caption = notification.Caption
 			msg.ParseMode = "HTML"
 			_, err := b.Api.Send(msg)
 			if err != nil {
 				return err
 			}
 		} else {
-			caption = "\nCambio en el estado de un artículo al que seguias a: \n Estado: <b>No disponible</b>"
-			msg := tgbotapi.NewMessage(int64(user_id), caption)
+			msg := tgbotapi.NewMessage(int64(user_id), notification.Caption)
 			msg.ParseMode = "HTML"
 			_, err := b.Api.Send(msg)
 			if err != nil {
@@ -246,4 +238,58 @@ func articleID(articleInfo *scraper.ArticleInfo) string {
 	}
 	splitURL := strings.Split(articleInfo.Url, "/")
 	return splitURL[len(splitURL)-1]
+}
+
+type trackedItemAlertPlan struct {
+	Status             string
+	Notify             bool
+	DeleteSubscription bool
+}
+
+func planTrackedItemAlert(itemUpdate models.ItemUpdate, articleInfo *scraper.ArticleInfo) trackedItemAlertPlan {
+	status := "No disponible"
+	if articleInfo != nil {
+		status = articleInfo.Status
+	}
+	return trackedItemAlertPlan{
+		Status:             status,
+		Notify:             status != itemUpdate.Status,
+		DeleteSubscription: status == "No disponible",
+	}
+}
+
+func notificationArticleInfo(currentArticle *scraper.ArticleInfo, articleWithImage *scraper.ArticleInfo) *scraper.ArticleInfo {
+	if articleWithImage != nil {
+		return articleWithImage
+	}
+	return currentArticle
+}
+
+type itemUpdateNotification struct {
+	Caption    string
+	Photo      bool
+	PhotoBytes []byte
+}
+
+func trackedItemNotification(articleInfo *scraper.ArticleInfo) itemUpdateNotification {
+	if articleInfo == nil {
+		return itemUpdateNotification{
+			Caption: "\nCambio en el estado de un artículo al que seguias a: \n Estado: <b>No disponible</b>",
+		}
+	}
+	caption := trackedItemStatusCaption(articleInfo)
+	if len(articleInfo.Img) == 0 {
+		return itemUpdateNotification{
+			Caption: caption,
+		}
+	}
+	return itemUpdateNotification{
+		Caption:    caption,
+		Photo:      true,
+		PhotoBytes: articleInfo.Img,
+	}
+}
+
+func trackedItemStatusCaption(articleInfo *scraper.ArticleInfo) string {
+	return articleInfo.Title + "\nCambio en el estado del artículo: \n" + articleInfo.Metadata[3]
 }
