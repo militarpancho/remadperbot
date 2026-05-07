@@ -1,7 +1,8 @@
 FROM golang:1.26-alpine3.23 AS builder
 
 ARG OS=linux
-ARG ARCH=amd64
+ARG ARCH=arm
+ARG ARM=7
 
 RUN apk add --no-cache ca-certificates git
 
@@ -11,7 +12,7 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build -trimpath -tags netgo -ldflags="-s -w" -o /out/remadperbot .
+RUN CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} GOARM=${ARM} go build -trimpath -tags netgo -ldflags="-s -w" -o /out/remadperbot .
 
 FROM alpine:3.23
 
