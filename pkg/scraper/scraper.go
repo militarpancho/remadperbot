@@ -189,6 +189,17 @@ func (c Client) ArticleInfosUntilKnown(knownHashes map[string]bool, downloadImag
 	return articles, nil
 }
 
+func (c Client) LatestArticleInfo(downloadImage bool) (*ArticleInfo, error) {
+	antiques, err := c.CatalogPage(0)
+	if err != nil {
+		return nil, err
+	}
+	if len(antiques) == 0 {
+		return nil, fmt.Errorf("catalog is empty")
+	}
+	return c.articleInfoFromAntiquity(antiques[0], "", downloadImage)
+}
+
 func (c Client) DownloadFile(name string) ([]byte, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/files/download/%s", c.apiBaseURL(), url.PathEscape(name)), nil)
 	if err != nil {

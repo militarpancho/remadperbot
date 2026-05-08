@@ -179,3 +179,46 @@ func TestArticleInfosUntilKnownStopsAtFirstKnownHash(t *testing.T) {
 		t.Fatalf("second article URL = %q, want new-2 URL", articles[1].Url)
 	}
 }
+
+func TestLatestArticleInfoUsesFirstCatalogArticle(t *testing.T) {
+	var downloadedFile string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/v1/antiquities/catalog":
+			w.Write([]byte(`[
+				{"category":{"name":"Menaje","type":"Hogar"},"description":"Reciente","file":{"name":"latest.jpeg"},"hash":"latest","location":"Villaverde","name":"Ultimo","state":"Publicado"},
+				{"category":{"name":"Otros","type":"Hogar"},"description":"Anterior","file":{"name":"older.jpeg"},"hash":"older","location":"Moncloa","name":"Anterior","state":"Publicado"}
+			]`))
+		case "/api/v1/files/download/latest.jpeg":
+			downloadedFile = "latest.jpeg"
+			w.Write([]byte("image bytes"))
+		default:
+			t.Fatalf("unexpected path %q", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+	client := Client{
+		HTTPClient:    server.Client(),
+		APIBaseURL:    server.URL + "/api/v1",
+		DetailBaseURL: "https://remad.example/detalle/",
+	}
+
+	article, err := client.LatestArticleInfo(true)
+
+	if err != nil {
+		t.Fatalf("LatestArticleInfo returned error: %v", err)
+	}
+	if article.ID != "latest" {
+		t.Fatalf("article ID = %q, want latest", article.ID)
+	}
+	if article.Url != "https://remad.example/detalle/latest" {
+		t.Fatalf("article URL = %q, want latest URL", article.Url)
+	}
+	if downloadedFile != "latest.jpeg" {
+		t.Fatalf("downloaded file = %q, want latest.jpeg", downloadedFile)
+	}
+	if string(article.Img) != "image bytes" {
+		t.Fatalf("image bytes = %q, want image bytes", string(article.Img))
+	}
+}

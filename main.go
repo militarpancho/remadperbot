@@ -9,6 +9,8 @@ import (
 	"remadperbot/pkg/miscelanea"
 	"remadperbot/pkg/scraper"
 	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 const sleepTime = 1800 // 30 minutes
@@ -33,6 +35,7 @@ func main() {
 	catalogSeeded := false
 	go botClient.HandleUpdates()
 	go botClient.Notify()
+	postStartupDebugArticle(&botClient, scraperClient)
 	for true {
 		if miscelanea.CheckOpenGreenPoints() {
 			if !catalogSeeded {
@@ -62,7 +65,25 @@ func main() {
 		}
 		time.Sleep(scraperInterval * time.Second)
 	}
+}
 
+type articlePoster interface {
+	PostNewArticle(*scraper.ArticleInfo) (tgbotapi.Message, error)
+}
+
+func postStartupDebugArticle(botClient articlePoster, scraperClient scraper.Client) {
+	articleInfo, err := scraperClient.LatestArticleInfo(true)
+	if err != nil {
+		err = fmt.Errorf("Error finding startup debug article: %w", err)
+		fmt.Println(err.Error())
+		return
+	}
+	log.Printf("Startup debug product found: %s", articleInfo.Url)
+	_, err = botClient.PostNewArticle(articleInfo)
+	if err != nil {
+		err = fmt.Errorf("Error posting startup debug article: %w", err)
+		fmt.Println(err.Error())
+	}
 }
 
 func seedSeenProducts(seenProducts map[string]bool, scraperClient scraper.Client) error {

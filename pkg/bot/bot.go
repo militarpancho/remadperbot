@@ -17,6 +17,7 @@ import (
 )
 
 const antiquityEndpoint = scraper.RemadDetailBaseURL
+const telegramCallbackDataLimit = 64
 
 var (
 	token         = os.Getenv("TOKEN")
@@ -53,8 +54,7 @@ func NewTelegramBot(db db.Database) botClient {
 func (b *botClient) HandleUpdates() {
 	for update := range b.UpdatesChan {
 		if update.CallbackQuery != nil {
-			var cb callbackData
-			err := json.Unmarshal([]byte(update.CallbackData()), &cb)
+			cb, err := parseCallbackData(update.CallbackData())
 			if err != nil {
 				err = fmt.Errorf("Error unmarshalling callback data: %w", err)
 				fmt.Println(err.Error())
@@ -218,14 +218,38 @@ func (b *botClient) insertItemUpdate(update tgbotapi.Update, cb callbackData) {
 func numericKeyboard(id string) *tgbotapi.InlineKeyboardMarkup {
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("🔄 Actualizar Estado", fmt.Sprintf("{\"id\": \"%s\", \"action\":\"update\"}", id)),
-			tgbotapi.NewInlineKeyboardButtonData("👀 Informarme de Cambios", fmt.Sprintf("{\"id\": \"%s\", \"action\":\"notify\"}", id)),
+			tgbotapi.NewInlineKeyboardButtonData("🔄 Actualizar Estado", encodeCallbackData(id, "update")),
+			tgbotapi.NewInlineKeyboardButtonData("👀 Informarme de Cambios", encodeCallbackData(id, "notify")),
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonURL("🤖 Abrir Alertas Remad Bot", "https://t.me/remadperbot"),
 		),
 	)
 	return &keyboard
+}
+
+func encodeCallbackData(id string, action string) string {
+	switch action {
+	case "update":
+		return "u:" + id
+	case "notify":
+		return "n:" + id
+	default:
+		return fmt.Sprintf("{\"id\": \"%s\", \"action\":\"%s\"}", id, action)
+	}
+}
+
+func parseCallbackData(data string) (callbackData, error) {
+	if strings.HasPrefix(data, "u:") {
+		return callbackData{Id: strings.TrimPrefix(data, "u:"), Action: "update"}, nil
+	}
+	if strings.HasPrefix(data, "n:") {
+		return callbackData{Id: strings.TrimPrefix(data, "n:"), Action: "notify"}, nil
+	}
+
+	var cb callbackData
+	err := json.Unmarshal([]byte(data), &cb)
+	return cb, err
 }
 
 func articleURL(id string) string {

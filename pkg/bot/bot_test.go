@@ -111,3 +111,23 @@ func TestTrackedItemNotificationForExistingArticleWithoutImageUsesTextOnly(t *te
 		t.Fatalf("Caption = %q, want it to include current status", notification.Caption)
 	}
 }
+
+func TestCallbackDataFitsTelegramLimitForRemadHash(t *testing.T) {
+	id := "BYCAXTmrcbM4WkfGeHQSSN3c7Ts4D7TvNvI6L5os"
+
+	for _, action := range []string{"update", "notify"} {
+		data := encodeCallbackData(id, action)
+
+		if len(data) > telegramCallbackDataLimit {
+			t.Fatalf("callback data length for %s = %d, want <= %d: %q", action, len(data), telegramCallbackDataLimit, data)
+		}
+
+		cb, err := parseCallbackData(data)
+		if err != nil {
+			t.Fatalf("parseCallbackData(%q) returned error: %v", data, err)
+		}
+		if cb.Id != id || cb.Action != action {
+			t.Fatalf("callbackData = %#v, want id %q and action %q", cb, id, action)
+		}
+	}
+}
